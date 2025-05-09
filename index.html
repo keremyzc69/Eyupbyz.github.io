@@ -906,48 +906,65 @@
   
       <!-- JavaScript Kodu Burada -->
       <script>
-          // Yorumları Local Storage'dan yükleme
-          function loadComments() {
-              const comments = JSON.parse(localStorage.getItem('comments')) || [];
-              const commentsSection = document.getElementById('comments');
-              commentsSection.innerHTML = ''; // Önceki yorumları temizle
-  
-              comments.forEach(function(comment) {
-                  const commentHtml = `
-                      <div class="comment">
-                          <div class="comment-header">${comment.name} - ${comment.date}</div>
-                          <p>${comment.comment}</p>
-                      </div>
-                  `;
-                  commentsSection.insertAdjacentHTML('beforeend', commentHtml);
-              });
-          }
-  
-          // Yorumları kaydetme ve ekleme
-          document.getElementById('commentForm').addEventListener('submit', function(event) {
-              event.preventDefault(); // Formun sayfa yenilemesini engelle
-  
-              // Kullanıcıdan alınan veriler
-              const name = document.getElementById('name').value;
-              const comment = document.getElementById('comment').value;
-              const date = document.getElementById('date').value;
-  
-              // Yorumları Local Storage'a ekleyin
-              const comments = JSON.parse(localStorage.getItem('comments')) || [];
-              comments.push({ name, comment, date });
-              localStorage.setItem('comments', JSON.stringify(comments));
-  
-              // Yeni yorumu ekleyin
-              loadComments();
-  
-              // Formu sıfırlama
-              document.getElementById('commentForm').reset();
+      
+        function loadComments() {
+          const commentsSection = document.getElementById('comments');
+          commentsSection.innerHTML = '';
+       // firebase de oluşturuğumuz database i burada çağırıyoruz 
+          db.collection("comments").orderBy("timestamp", "desc").onSnapshot((querySnapshot) => {
+            commentsSection.innerHTML = ''; 
+            querySnapshot.forEach((doc) => {
+              const data = doc.data();
+              const commentHtml = `
+                <div class="comment">
+                    <div class="comment-header">${data.name} - ${data.date}</div>
+                    <p>${data.comment}</p>
+                </div>
+              `;
+              commentsSection.insertAdjacentHTML('beforeend', commentHtml);
+            });
           });
-  
-          // Sayfa yüklendiğinde yorumları yükle
-          window.onload = function() {
-              loadComments();
-          };
+        }
+      
+        // Yorum göndermek için 
+        document.getElementById('commentForm').addEventListener('submit', function (event) {
+          event.preventDefault();
+      
+          const name = document.getElementById('name').value;
+          const comment = document.getElementById('comment').value;
+          const date = document.getElementById('date').value;
+      // database e veri eklemek için 
+          db.collection("comments").add({
+            name,
+            comment,
+            date,
+            timestamp: new Date()
+          }).then(() => {
+            document.getElementById('commentForm').reset();
+          });
+        });
+      
+        window.onload = loadComments;
+      </script>
+      
+      <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+      <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+      
+      <script>
+       
+                const firebaseConfig = {
+          apiKey: "AIzaSyDthZUPLO01vdIcm4NJuqcEmLGi5CL0HZs",
+          authDomain: "rapor-sheet.firebaseapp.com",
+          databaseURL: "https://rapor-sheet-default-rtdb.firebaseio.com",
+          projectId: "rapor-sheet",
+          storageBucket: "rapor-sheet.firebasestorage.app",
+          messagingSenderId: "709999932103",
+          appId: "1:709999932103:web:ca8dadaa89fe650e3584e2"
+        };
+      
+      
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
       </script>
   
   </body>
